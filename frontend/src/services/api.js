@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:5000/api",
+  baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -31,9 +31,19 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Don't try refresh for auth endpoints
+    const requestUrl = originalRequest?.url || "";
+
+    const isAuthRequest =
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/register") ||
+      requestUrl.includes("/auth/refresh") ||
+      requestUrl.includes("/auth/logout");
+
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest?._retry &&
+      !isAuthRequest
     ) {
       originalRequest._retry = true;
 
@@ -42,6 +52,8 @@ api.interceptors.response.use(
 
       if (!refreshToken) {
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+
         window.location.href = "/login";
 
         return Promise.reject(error);
@@ -49,7 +61,7 @@ api.interceptors.response.use(
 
       try {
         const response = await axios.post(
-          "http://127.0.0.1:5000/api/auth/refresh",
+          "/api/auth/refresh",
           {
             refreshToken,
           }
