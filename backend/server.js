@@ -1,11 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-import authRoutes from "./routes/auth.routes.js";
-import productRoutes from "./routes/product.routes.js";
 import cors from "cors";
 
+import connectDB from "./config/db.js";
 
+import authRoutes from "./routes/auth.routes.js";
+import productRoutes from "./routes/product.routes.js";
 
 dotenv.config();
 
@@ -13,7 +13,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
   })
 );
 
@@ -34,6 +34,11 @@ app.use((req, res) => {
   });
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+// Local development
+if (process.env.NODE_ENV !== "production") {
+  app.listen(5000, () => {
+    console.log("Server running on port 5000");
+  });
+}
+
+export default app;
